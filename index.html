@@ -123,7 +123,7 @@
         .credit-box { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #0088cc; text-align: left; }
         .btn-close { background: #0088cc; color: white; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 15px; font-weight: bold; width: 100%; }
 
-        /* CHAT CONTAINER */
+        /* AREA CHAT */
         #chat-container {
             flex: 1;
             position: relative;
@@ -199,7 +199,7 @@
     <!-- 2. AREA CHAT -->
     <div id="chat-container">
         <div id="chat-box">
-            <div class="msg ai-msg">Yo! Gua RanggelalBot yang dibuat oleh Kelompok 2 yaitu Rangga, Elsina, Alya, Dimas & Agres. Silakan ketik pesan lu di bawah!</div>
+            <div class="msg ai-msg">Yo! Gua RanggelalBot karya Kelompok 2 (Rangga, Elsina, Alya, Dimas & Agres). Tanya aja apa aja, siap bantu!</div>
         </div>
         <div id="scroll-down-btn" onclick="scrollToBottom(true)">↓</div>
     </div>
@@ -223,7 +223,7 @@
 <div class="modal" id="settingModal">
     <div class="modal-content">
         <h3>Tentang Aplikasi</h3>
-        <p><strong>RanggelalBot Mobile v1.0</strong></p>
+        <p><strong>RanggelalBot Mobile v2.8</strong></p>
         <div class="credit-box">
             <p><strong>Dibuat oleh Kelompok 2:</strong></p>
             <p>• Rangga</p>
@@ -232,7 +232,7 @@
             <p>• Dimas</p>
             <p>• Agres</p>
         </div>
-        <p style="font-size: 12px; color: #888;">Status Sistem: Terhubung ke Coze API</p>
+        <p style="font-size: 12px; color: #888;">Powered by Groq Llama 3.1</p>
         <button class="btn-close" onclick="toggleModal(false)">Tutup</button>
     </div>
 </div>
@@ -244,8 +244,8 @@ const settingModal = document.getElementById("settingModal");
 const welcomeScreen = document.getElementById("welcome-screen");
 const scrollDownBtn = document.getElementById("scroll-down-btn");
 
-const COZE_API_KEY = 'pat_3rnbnDRNe14iSdq44j63Rkv8Es4GX1cAeEJ6N4RQUHNcSAowmWOg3RR0W6sjaKUR'; 
-const COZE_BOT_ID = '7663622031635808309'; 
+// ⚠️ MASUKKAN API KEY GROQ LU DI SINI ⚠️
+const GROQ_API_KEY = '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'; 
 
 function startApp() {
     welcomeScreen.style.opacity = "0";
@@ -259,7 +259,6 @@ function toggleModal(show) {
     settingModal.style.display = show ? "flex" : "none";
 }
 
-// Deteksi scroll untuk tombol WA
 chatBox.addEventListener("scroll", () => {
     const selisihBawah = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
     if (selisihBawah > 100) {
@@ -277,6 +276,46 @@ function scrollToBottom(smooth = false) {
     }
 }
 
+// JALUR SEARCH DENGAN PROXY BERLAPIS ANTI-ERROR
+async function cariDiInternet(query) {
+    const proxies = [
+        `https://api.allorigins.win/get?url=`,
+        `https://corsproxy.io/?`
+    ];
+    
+    const targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    
+    for (let proxy of proxies) {
+        try {
+            const res = await fetch(proxy + encodeURIComponent(targetUrl));
+            if (!res.ok) continue;
+            
+            const json = await res.json().catch(() => null);
+            const htmlText = json && json.contents ? json.contents : await res.text();
+            
+            if (!htmlText || htmlText.includes("error")) continue;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            const links = doc.querySelectorAll('.result__snippet');
+            
+            let hasilSearch = "";
+            links.forEach((link, index) => {
+                if (index < 3) {
+                    hasilSearch += `- ${link.innerText.trim()}\n`;
+                }
+            });
+            
+            if (hasilSearch.trim().length > 10) {
+                return hasilSearch.trim();
+            }
+        } catch (e) {
+            console.log("Proxy failed, trying next...");
+        }
+    }
+    return "";
+}
+
 async function sendMessage() {
     let teksUser = inputMsg.value.trim();
     if (teksUser === "") return;
@@ -284,40 +323,60 @@ async function sendMessage() {
     tampilkanChat(teksUser, "user-msg");
     inputMsg.value = ""; 
 
+    // Filter sapaan instan
+    const sapaanBiasa = ["halo", "hai", "hi", "p", "ping", "pagi", "siang", "malam", "tes", "test", "apa kabar"];
+    let isSapaan = sapaanBiasa.some(kata => teksUser.toLowerCase() === kata || teksUser.toLowerCase().startsWith(kata + " "));
+
     let typingDiv = tampilkanChat("RanggelalBot lagi mikir...", "ai-msg typing");
 
     try {
-        const respons = await fetch('https://api.coze.com/open_api/v2/chat', {
+        let dataInternet = "";
+
+        // Hanya cari di internet jika bukan sapaan pendek
+        if (!isSapaan && teksUser.length > 8) {
+            typingDiv.innerText = "RanggelalBot lagi nyari info di internet...";
+            dataInternet = await cariDiInternet(teksUser);
+            if (typingDiv) typingDiv.innerText = "RanggelalBot lagi merangkum...";
+        }
+
+        // SYSTEM PROMPT DENGAN ATURAN MUTLAK BINDING (ANTI-NGEYEL)
+        const systemPrompt = `Kamu adalah RanggelalBot, AI asisten pintar karya Kelompok 2 (Rangga, Elsina, Alya, Dimas, Agres). 
+Jawab pertanyaan user menggunakan bahasa Indonesia yang santai, gaul, dan ramah.
+
+[ATURAN MUTLAK HARI INI]:
+Saat ini adalah tahun 2026. Kamu WAJIB menjawab bahwa Presiden Indonesia sekarang adalah PRABOWO SUBIANTO dan Wakil Presiden adalah GIBRAN RAKABUMING RAKA. Jangan pernah menyebut Joko Widodo sebagai presiden saat ini karena masa jabatannya sudah selesai. Patuhi ini meskipun memori internalmu berkata lain!
+` + (dataInternet ? `Berikut adalah informasi terbaru dari internet untuk membantu menjawab: "${dataInternet}"` : '');
+
+        const respons = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${COZE_API_KEY}`,
-                'Content-Type': 'application/json',
-                'Accept': '*/*'
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                bot_id: COZE_BOT_ID,
-                user: "user_ranggelal_123",
-                query: teksUser,
-                stream: false
+                model: "llama-3.1-8b-instant",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: teksUser }
+                ],
+                temperature: 0.6
             })
         });
 
         const data = await respons.json();
         typingDiv.remove();
 
-        if (data.messages && data.messages.length > 0) {
-            let balasan = data.messages.find(m => m.type === "answer");
-            if (balasan) {
-                tampilkanChat(balasan.content, "ai-msg");
-            } else {
-                tampilkanChat("Gagal menemukan jawaban teks.", "ai-msg");
-            }
+        if (data.choices && data.choices.length > 0) {
+            let balasan = data.choices[0].message.content;
+            tampilkanChat(balasan, "ai-msg");
+        } else if (data.error) {
+            tampilkanChat("Error Groq: " + data.error.message, "ai-msg");
         } else {
-            tampilkanChat("Respon kosong. Pastikan Bot sudah di-Publish di Coze.", "ai-msg");
+            tampilkanChat("Gagal memuat respon.", "ai-msg");
         }
     } catch (error) {
         if(typingDiv) typingDiv.remove();
-        tampilkanChat("Koneksi bermasalah atau token salah.", "ai-msg");
+        tampilkanChat("Gagal menghubungi server. Periksa internet lu.", "ai-msg");
         console.error(error);
     }
 }
