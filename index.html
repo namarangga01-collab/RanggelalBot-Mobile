@@ -6,7 +6,7 @@
     <title>RanggelalBot Mobile</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: #e5ddd5; display: flex; flex-direction: column; height: 100vh; position: relative; overflow: hidden; }
+        body { background: #e5ddd5; height: 100vh; position: relative; overflow: hidden; }
         
         /* HALAMAN AWAL / WELCOME SCREEN */
         #welcome-screen {
@@ -52,7 +52,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             transition: transform 0.2s ease;
         }
-        .btn-start:active { transform: scale(0.95); }
 
         /* HEADER UTAMA CHAT */
         #header { 
@@ -63,7 +62,12 @@
             align-items: center; 
             justify-content: space-between; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            z-index: 90;
         }
 
         .header-center {
@@ -74,14 +78,7 @@
             padding-left: 30px; 
         }
         
-        .logo-header {
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            background: white;
-        }
-
+        .logo-header { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: white; }
         #header span { font-weight: bold; font-size: 18px; }
         .btn-setting { background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 5px; display: flex; align-items: center; }
 
@@ -107,35 +104,52 @@
             max-width: 340px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             text-align: center;
-            animation: popup 0.3s ease;
-        }
-
-        @keyframes popup {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
         }
 
         .modal-content h3 { color: #0088cc; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
-        .modal-content p { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; }
         .credit-box { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #0088cc; text-align: left; }
-        .btn-close { background: #0088cc; color: white; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 15px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-close { background: #0088cc; color: white; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 15px; font-weight: bold; width: 100%; }
 
-        /* AREA CHAT */
-        #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        /* AREA CHAT (Diberi margin atas & bawah agar tidak tertutup header/input area) */
+        #chat-box { 
+            position: absolute;
+            top: 55px;
+            bottom: 65px;
+            left: 0;
+            right: 0;
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+
         .msg { max-width: 75%; padding: 10px 14px; border-radius: 10px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
         .user-msg { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .ai-msg { background: white; align-self: flex-start; border-top-left-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .typing { color: #888; font-style: italic; font-size: 13px; }
         
-        /* INPUT AREA */
-        #input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 10px; border-top: 1px solid #ddd; z-index: 10; }
+        /* INPUT AREA FIX (Dipaksa nempel di bawah layar) */
+        #input-area { 
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: #f0f0f0; 
+            padding: 10px; 
+            display: flex; 
+            gap: 10px; 
+            border-top: 1px solid #ddd; 
+            z-index: 95; 
+        }
         #input-msg { flex: 1; padding: 12px; border: none; border-radius: 20px; outline: none; font-size: 15px; }
         #send-btn { background: #0088cc; color: white; border: none; padding: 0 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<!-- 1. HALAMAN AWAL (WELCOME SCREEN) -->
+<!-- 1. HALAMAN AWAL -->
 <div id="welcome-screen">
     <img src="logo.png" alt="Logo" class="welcome-logo">
     <h1>RanggelalBot Mobile</h1>
@@ -175,7 +189,7 @@
     <div class="msg ai-msg">Yo! Gua RanggelalBot yang dibuat oleh Kelompok 2 yaitu Rangga, Elsina, Alya, Dimas & Agres. Silakan ketik pesan lu, kali ini dijamin langsung dibales!</div>
 </div>
 
-<!-- AREA KETIK PESAN (PASTIKAN BAGIAN INI ADA) -->
+<!-- AREA KETIK PESAN -->
 <div id="input-area">
     <input type="text" id="input-msg" placeholder="Ketik pesan..." autocomplete="off">
     <button id="send-btn" onclick="sendMessage()">KIRIM</button>
