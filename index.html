@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RanggelalBot Mobile</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #e5ddd5; display: flex; flex-direction: column; height: 100vh; position: relative; overflow: hidden; }
+        
+        /* HALAMAN AWAL / WELCOME SCREEN */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0088cc, #006699);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .welcome-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: white;
+            object-fit: cover;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        #welcome-screen h1 { font-size: 26px; margin-bottom: 10px; font-weight: bold; }
+        #welcome-screen p { font-size: 15px; opacity: 0.9; margin-bottom: 30px; max-width: 280px; line-height: 1.4; }
+        
+        .btn-start {
+            background: white;
+            color: #0088cc;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease;
+        }
+        .btn-start:active { transform: scale(0.95); }
+
+        /* HEADER UTAMA CHAT */
+        #header { 
+            background: #0088cc; 
+            color: white; 
+            padding: 10px 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            position: relative;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto; 
+            padding-left: 30px; 
+        }
+        
+        .logo-header {
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            background: white;
+        }
+
+        #header span { font-weight: bold; font-size: 18px; }
+        .btn-setting { background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 5px; display: flex; align-items: center; }
+
+        /* POP-UP / MODAL PENGATURAN */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 85%;
+            max-width: 340px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: popup 0.3s ease;
+        }
+
+        @keyframes popup {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 { color: #0088cc; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
+        .modal-content p { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; }
+        .credit-box { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #0088cc; text-align: left; }
+        .btn-close { background: #0088cc; color: white; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 15px; font-weight: bold; cursor: pointer; width: 100%; }
+
+        /* AREA CHAT */
+        #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 75%; padding: 10px 14px; border-radius: 10px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+        .user-msg { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .ai-msg { background: white; align-self: flex-start; border-top-left-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .typing { color: #888; font-style: italic; font-size: 13px; }
+        
+        /* INPUT AREA */
+        #input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 10px; border-top: 1px solid #ddd; z-index: 10; }
+        #input-msg { flex: 1; padding: 12px; border: none; border-radius: 20px; outline: none; font-size: 15px; }
+        #send-btn { background: #0088cc; color: white; border: none; padding: 0 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<!-- 1. HALAMAN AWAL (WELCOME SCREEN) -->
+<div id="welcome-screen">
+    <img src="logo.png" alt="Logo" class="welcome-logo">
+    <h1>RanggelalBot Mobile</h1>
+    <p>Asisten AI Pintar Tugas Kelompok 2 (Rangga, Elsina, Alya, Dimas & Agres)</p>
+    <button class="btn-start" onclick="startApp()">MULAI</button>
+</div>
+
+<!-- 2. HEADER UTAMA -->
+<div id="header">
+    <div class="header-center">
+        <img src="logo.png" alt="Logo" class="logo-header">
+        <span>RanggelalBot Mobile</span>
+    </div>
+    <button class="btn-setting" onclick="toggleModal(true)">⚙️</button>
+</div>
+
+<!-- POP-UP MENU PENGATURAN -->
+<div class="modal" id="settingModal">
+    <div class="modal-content">
+        <h3>Tentang Aplikasi</h3>
+        <p><strong>RanggelalBot Mobile v1.0</strong></p>
+        <div class="credit-box">
+            <p><strong>Dibuat oleh Kelompok 2:</strong></p>
+            <p>• Rangga</p>
+            <p>• Elsina</p>
+            <p>• Alya</p>
+            <p>• Dimas</p>
+            <p>• Agres</p>
+        </div>
+        <p style="font-size: 12px; color: #888;">Status Sistem: Terhubung ke Coze API</p>
+        <button class="btn-close" onclick="toggleModal(false)">Tutup</button>
+    </div>
+</div>
+
+<!-- RUANG CHAT -->
+<div id="chat-box">
+    <div class="msg ai-msg">Yo! Gua RanggelalBot yang dibuat oleh Kelompok 2 yaitu Rangga, Elsina, Alya, Dimas & Agres. Silakan ketik pesan lu, kali ini dijamin langsung dibales!</div>
+</div>
+
+<!-- AREA KETIK PESAN (PASTIKAN BAGIAN INI ADA) -->
+<div id="input-area">
+    <input type="text" id="input-msg" placeholder="Ketik pesan..." autocomplete="off">
+    <button id="send-btn" onclick="sendMessage()">KIRIM</button>
+</div>
+
+<script>
+const chatBox = document.getElementById("chat-box");
+const inputMsg = document.getElementById("input-msg");
+const settingModal = document.getElementById("settingModal");
+const welcomeScreen = document.getElementById("welcome-screen");
+
+const COZE_API_KEY = 'pat_S7n55z1Re4M6ffCGWin8uRvO2FB7fYnlPORUW6pZpdLFaKPFvtHSt7GXqLxALTAo'; 
+const COZE_BOT_ID = '7663622031635808309'; 
+
+function startApp() {
+    welcomeScreen.style.opacity = "0";
+    welcomeScreen.style.transform = "translateY(-100%)";
+    setTimeout(() => {
+        welcomeScreen.style.display = "none";
+    }, 500);
+}
+
+function toggleModal(show) {
+    settingModal.style.display = show ? "flex" : "none";
+}
+
+async function sendMessage() {
+    let teksUser = inputMsg.value.trim();
+    if (teksUser === "") return;
+
+    tampilkanChat(teksUser, "user-msg");
+    inputMsg.value = ""; 
+
+    let typingDiv = tampilkanChat("RanggelalBot lagi mikir...", "ai-msg typing");
+
+    try {
+        const respons = await fetch('https://api.coze.com/open_api/v2/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${COZE_API_KEY}`,
+                'Content-Type': 'application/json',
+                'Accept': '*/*'
+            },
+            body: JSON.stringify({
+                bot_id: COZE_BOT_ID,
+                user: "user_ranggelal_123",
+                query: teksUser,
+                stream: false
+            })
+        });
+
+        const data = await respons.json();
+        typingDiv.remove();
+
+        if (data.messages && data.messages.length > 0) {
+            let balasan = data.messages.find(m => m.type === "answer");
+            if (balasan) {
+                tampilkanChat(balasan.content, "ai-msg");
+            } else {
+                tampilkanChat("Gagal menemukan jawaban teks di respon Coze.", "ai-msg");
+            }
+        } else {
+            tampilkanChat("Respon kosong. Pastikan Bot sudah di-Publish di Coze.", "ai-msg");
+        }
+    } catch (error) {
+        typingDiv.remove();
+        tampilkanChat("Koneksi bermasalah atau token salah.", "ai-msg");
+        console.error(error);
+    }
+}
+
+function tampilkanChat(teks, tipeClass) {
+    let div = document.createElement("div");
+    div.className = "msg " + tipeClass;
+    div.innerText = teks;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
+}
+
+inputMsg.addEventListener("keyup", function(event) {
+    if (event.key === "Enter") { sendMessage(); }
+});
+</script>
+</body>
+</html>
